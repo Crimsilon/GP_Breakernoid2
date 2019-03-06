@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Breakernoid
+namespace BreakernoidsGL
 {
     public class GameObject
     {
@@ -15,6 +15,7 @@ namespace Breakernoid
         protected Texture2D texture;
         protected Game game;
         public Vector2 position;
+        public Rectangle BoundingRect;
 
         public float Width
         {
@@ -50,6 +51,7 @@ namespace Breakernoid
                 Vector2 drawPosition = position;
                 drawPosition.X -= texture.Width / 2;
                 drawPosition.Y -= texture.Height / 2;
+                BoundingRect = new Rectangle((int)drawPosition.X, (int)drawPosition.Y, texture.Width, texture.Height);
                 batch.Draw(texture, drawPosition, Color.White);
             }
         }

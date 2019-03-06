@@ -1,6 +1,15 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
-namespace Breakernoid
+namespace BreakernoidsGL
 {
     /// <summary>
     /// This is the main type for your game
@@ -9,6 +18,8 @@ namespace Breakernoid
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        SoundEffect ballBounceSFX, ballHitSFX, deathSFX, powerUpSFX;
+        Random random = new Random();
 
         // Background texture
         Texture2D bgTexture;
@@ -17,11 +28,28 @@ namespace Breakernoid
         // Ball object
         Ball ball;
 
+
         // If 0, the ball can collide with the paddle
         int ballWithPaddle = 0;
 
+
+        //List of powerups
+        List<PowerUp> powerups = new List<PowerUp>();
+
+        //Powerup percentage
+        Double spawnChance = 1.0;
+        bool destroyPowerUp = false;
+
         // List of all the blocks
         List<Block> blocks = new List<Block>();
+        int[,] blockLayout = new int[,]{
+            {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+            {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+            {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+            {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+        };
 
         public Game1()
             : base()
@@ -71,14 +99,23 @@ namespace Breakernoid
             ball.position = paddle.position;
             ball.position.Y -= ball.Height + paddle.Height;
 
+            //Sounds
+            ballBounceSFX = Content.Load<SoundEffect>("ball_bounce");
+            ballHitSFX = Content.Load<SoundEffect>("ball_hit");
+            powerUpSFX = Content.Load<SoundEffect>("powerup");
+            deathSFX = Content.Load<SoundEffect>("death");
+
             // Blocks
             // For now, just create a row of blocks
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i != blockLayout.GetLength(0); i++)
             {
-                Block tempBlock = new Block(this);
-                tempBlock.LoadContent();
-                tempBlock.position = new Vector2(64 + i * 64, 200);
-                blocks.Add(tempBlock);
+                for (int l = 0; l != blockLayout.GetLength(1); l++)
+                {
+                    Block tempBlock = new Block((Block.BlockColor)blockLayout[i, l], this);
+                    tempBlock.LoadContent();
+                    tempBlock.position = new Vector2(64 + l * 64, 100 + i * 32);
+                    blocks.Add(tempBlock);
+                }
             }
         }
 
@@ -102,8 +139,34 @@ namespace Breakernoid
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             paddle.Update(deltaTime);
             ball.Update(deltaTime);
+
+            foreach (PowerUp powerup in powerups)
+            {
+                CheckForPowerUps(powerup);
+                powerup.Update(deltaTime);
+            }
             CheckCollisions();
             base.Update(gameTime);
+        }
+
+        private void CheckForPowerUps(PowerUp powerup)
+        {
+            if (paddle.BoundingRect.Intersects(powerup.BoundingRect))
+            {
+                ActivatePowerUp(powerup);
+            }
+
+        }
+        private void ActivatePowerUp(PowerUp powerup)
+        {
+            for (int i = powerups.Count - 1; i >= 0; i--)
+            {
+                if (powerups[i] == powerup)
+                {
+                    powerups[i].readyToDestroy = true;
+                    destroyPowerUp = true;
+                }
+            }
         }
 
         /// <summary>
@@ -112,7 +175,7 @@ namespace Breakernoid
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Blue);
+            GraphicsDevice.Clear(Color.Red);
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
@@ -127,6 +190,13 @@ namespace Breakernoid
             {
                 b.Draw(spriteBatch);
             }
+
+            // Draw powerups
+            foreach (PowerUp powerup in powerups)
+            {
+                powerup.Draw(spriteBatch);
+            }
+
 
             spriteBatch.End();
 
@@ -186,6 +256,7 @@ namespace Breakernoid
                     (ball.position.Y < (b.position.Y + b.Height / 2 + radius)))
                 {
                     collidedBlock = b;
+                    ballBounceSFX.Play();
                     break;
                 }
             }
@@ -209,12 +280,13 @@ namespace Breakernoid
 
                 // Now remove this block from the list
                 blocks.Remove(collidedBlock);
+                if (random.NextDouble() % 1 < spawnChance)
+                {
+                    SpawnPowerUp(collidedBlock.position);
+                }
             }
 
             // Check walls
-
-            //Had no idea what to do here, ripped it straight out of the check list. Tried reversing the 
-            // position x on bounce depending on the wall, but bad logic
             if (Math.Abs(ball.position.X - 32) < radius)
             {
                 ball.direction.X = -1.0f * ball.direction.X;
@@ -231,6 +303,29 @@ namespace Breakernoid
             {
                 LoseLife();
             }
+                //Destroying powerup when it hits the paddle
+                if (destroyPowerUp)
+                {
+                    for (int i = powerups.Count - 1; i >= 0; i--)
+                    {
+                        if (powerups[i].readyToDestroy)
+                        {
+                            PowerUp temppowerup = powerups[i];
+                            powerups.Remove(temppowerup);
+                        }
+                    }
+                    destroyPowerUp = false;
+                }
+        }
+
+        //make a random type of powerup and spawn it at the position a block is broken
+        private void SpawnPowerUp(Vector2 position)
+        {
+            int type = random.Next(3);
+            PowerUp newpowerup = new PowerUp((PowerUp.PowerUpType)type, this);
+            newpowerup.position = position;
+            newpowerup.LoadContent();
+            powerups.Add(newpowerup);
         }
 
         protected void LoseLife()
@@ -240,6 +335,7 @@ namespace Breakernoid
             ball.position = paddle.position;
             ball.position.Y -= ball.Height + paddle.Height;
             ball.direction = new Vector2(0.707f, -0.707f);
+            deathSFX.Play();
         }
     }
 }
