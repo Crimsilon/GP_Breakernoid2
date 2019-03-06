@@ -10,10 +10,15 @@ using Microsoft.Xna.Framework.Input;
 
 namespace BreakernoidsGL
 {
-    public class Ball : GameObject {
+    public class Ball : GameObject
+    {
         public Vector2 direction = new Vector2(0.707f, -0.707f);
         public float speed = 500;
         public bool caught = false;
+        public Vector2 tempBallPaddleRatio;
+        public int balltimer = 0;
+
+
         public Ball(Game myGame) :
         base(myGame)
         {
@@ -21,15 +26,22 @@ namespace BreakernoidsGL
         }
         public override void Update(float deltaTime)
         {
-            if (caught == false)
-            {
-                position += direction * speed * deltaTime;
+            
+                KeyboardState keyState = Keyboard.GetState();
+                if (keyState.IsKeyDown(Keys.Space))
+                {
+                    caught = false;
+                }
+
+                if (caught == false)
+                {
+                    position += direction * speed * deltaTime;
+                }
+
+                base.Update(deltaTime);
+
             }
-
-            base.Update(deltaTime);
-
         }
+
+
     }
-
-
-}

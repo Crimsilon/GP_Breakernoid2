@@ -27,6 +27,8 @@ namespace BreakernoidsGL
         Paddle paddle;
         // Ball object
         Ball ball;
+        //Ball catch
+        bool ballCatch = false;
 
 
         // If 0, the ball can collide with the paddle
@@ -167,6 +169,12 @@ namespace BreakernoidsGL
                     destroyPowerUp = true;
                 }
             }
+            switch (powerup.powerUpType)
+            {
+                case (PowerUp.PowerUpType)0:
+                    ballCatch = true;
+                    break;
+            }
         }
 
         /// <summary>
@@ -243,6 +251,13 @@ namespace BreakernoidsGL
             else if (ballWithPaddle > 0)
             {
                 ballWithPaddle--;
+            }
+
+            // if ball catch is active
+            if (ballWithPaddle == 20 && ballCatch && !ball.caught)
+            {
+                ball.caught = true;
+                ball.tempBallPaddleRatio = ball.position - paddle.position;
             }
 
             // Check for blocks
@@ -337,5 +352,5 @@ namespace BreakernoidsGL
             ball.direction = new Vector2(0.707f, -0.707f);
             deathSFX.Play();
         }
-    }
+}
 }
