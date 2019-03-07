@@ -12,7 +12,7 @@ namespace BreakernoidsGL
 {
     public class Paddle : GameObject
     {
-        public float speed = 500;
+        public float speed = 750;
         public Paddle(Game myGame):
         base(myGame)
         {

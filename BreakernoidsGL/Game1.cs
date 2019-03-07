@@ -214,14 +214,29 @@ namespace BreakernoidsGL
         protected void CheckCollisions()
         {
             float radius = ball.Width / 2;
+                if (ball.caught)
+                {
+                    if (ball.tempBallPaddleRatio == new Vector2(0, 0))
+                    {
+                        ball.SetRatio(paddle.position);
+
+                    }
+                    ball.position = paddle.position + ball.tempBallPaddleRatio;
+
+                }
 
             // Check for paddle
             if (ballWithPaddle == 0 &&
                 (ball.position.X > (paddle.position.X - radius - paddle.Width / 2)) &&
                 (ball.position.X < (paddle.position.X + radius + paddle.Width / 2)) &&
                 (ball.position.Y < paddle.position.Y) &&
-                (ball.position.Y > (paddle.position.Y - radius - paddle.Height / 2)))
+                (ball.position.Y > (paddle.position.Y - radius - paddle.Height / 2)) &&
+                !ball.caught)
             {
+
+
+
+
                 // Reflect based on which part of the paddle is hit
 
                 // By default, set the normal to "up"
@@ -248,6 +263,7 @@ namespace BreakernoidsGL
                 // No collisions between ball and paddle for 20 frames
                 ballWithPaddle = 20;
             }
+
             else if (ballWithPaddle > 0)
             {
                 ballWithPaddle--;
@@ -318,19 +334,19 @@ namespace BreakernoidsGL
             {
                 LoseLife();
             }
-                //Destroying powerup when it hits the paddle
-                if (destroyPowerUp)
+            //Destroying powerup when it hits the paddle
+            if (destroyPowerUp)
+            {
+                for (int i = powerups.Count - 1; i >= 0; i--)
                 {
-                    for (int i = powerups.Count - 1; i >= 0; i--)
+                    if (powerups[i].readyToDestroy)
                     {
-                        if (powerups[i].readyToDestroy)
-                        {
-                            PowerUp temppowerup = powerups[i];
-                            powerups.Remove(temppowerup);
-                        }
+                        PowerUp temppowerup = powerups[i];
+                        powerups.Remove(temppowerup);
                     }
-                    destroyPowerUp = false;
                 }
+                destroyPowerUp = false;
+            }
         }
 
         //make a random type of powerup and spawn it at the position a block is broken
@@ -352,5 +368,5 @@ namespace BreakernoidsGL
             ball.direction = new Vector2(0.707f, -0.707f);
             deathSFX.Play();
         }
-}
+    }
 }

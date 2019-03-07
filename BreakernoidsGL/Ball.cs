@@ -24,24 +24,48 @@ namespace BreakernoidsGL
         {
             textureName = "ball";
         }
+
+
+
+
         public override void Update(float deltaTime)
         {
-            
-                KeyboardState keyState = Keyboard.GetState();
-                if (keyState.IsKeyDown(Keys.Space))
-                {
-                    caught = false;
-                }
-
-                if (caught == false)
-                {
-                    position += direction * speed * deltaTime;
-                }
-
-                base.Update(deltaTime);
-
+            KeyboardState keyState = Keyboard.GetState();
+            if (keyState.IsKeyDown(Keys.Space))
+            {
+                caught = false;
+                tempBallPaddleRatio = new Vector2(0, 0);
             }
+
+            if (caught == false)
+            {
+                position += direction * speed * deltaTime;
+            }
+
+            base.Update(deltaTime);
+
         }
 
 
+
+
+        public void SetRatio(Vector2 paddlePos)
+        {
+
+            if (tempBallPaddleRatio == new Vector2(0, 0) && caught)
+            {
+                tempBallPaddleRatio = paddlePos - this.position;
+                if(0 > tempBallPaddleRatio.X)
+                    {
+                    direction = new Vector2(.707f, -.707f);
+                }
+                if (0 < tempBallPaddleRatio.X)
+                {
+                    direction = new Vector2(-.707f, -.707f);
+                }
+            }
+        }
     }
+
+
+}
